@@ -34,16 +34,16 @@ RUN a2enmod rewrite
 # Apache 配置：允许 .htaccess 覆盖
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
+# 复制启动脚本
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # 设置权限
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# 暴露端口（Railway 会通过环境变量 PORT 指定）
-EXPOSE ${PORT:-80}
-
-# 启动脚本
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Railway 会通过环境变量 PORT 指定端口
+# docker-entrypoint.sh 会动态配置 Apache 监听该端口
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
