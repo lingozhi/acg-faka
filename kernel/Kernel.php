@@ -70,7 +70,9 @@ try {
         try {
             $prefix = $db_config['prefix'] ?? '';
             $manageTable = $prefix . 'manage';
-            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
+            // 使用 count() 检查是否有记录
+            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
+            $isInstalled = $count > 0;
             Context::set(Base::IS_INSTALL, $isInstalled);
             Context::set(Base::LOCK, $isInstalled ? '1' : '');
         } catch (\Exception $e) {

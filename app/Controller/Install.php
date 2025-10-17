@@ -41,8 +41,9 @@ class Install extends User
             $db_config = config('database');
             $prefix = $db_config['prefix'] ?? '';
             $manageTable = $prefix . 'manage';
-            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
-            if ($isInstalled) {
+            // 使用 count() 检查是否有记录
+            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
+            if ($count > 0) {
                 Client::redirect("/", "どうして?", 3);
             }
         } catch (\Exception $e) {
@@ -88,8 +89,9 @@ class Install extends User
             $db_config = config('database');
             $prefix = $db_config['prefix'] ?? '';
             $manageTable = $prefix . 'manage';
-            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
-            if ($isInstalled) {
+            // 使用 count() 检查是否有记录
+            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
+            if ($count > 0) {
                 throw new JSONException("您已经安装过了，数据库中已存在管理员账号!");
             }
         } catch (JSONException $e) {
