@@ -36,8 +36,17 @@ class Install extends User
      */
     public function step(): string
     {
-        if (file_exists(BASE_PATH . '/kernel/Install/Lock')) {
-            Client::redirect("/", "どうして?", 3);
+        // 基于数据库判断是否已安装
+        try {
+            $db_config = config('database');
+            $prefix = $db_config['prefix'] ?? '';
+            $manageTable = $prefix . 'manage';
+            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
+            if ($isInstalled) {
+                Client::redirect("/", "どうして?", 3);
+            }
+        } catch (\Exception $e) {
+            // 数据库表不存在，继续安装流程
         }
         $data = [];
         $data['version'] = config("app")['version'];
@@ -74,8 +83,19 @@ class Install extends User
      */
     public function submit(): array
     {
-        if (file_exists(BASE_PATH . '/kernel/Install/Lock')) {
-            throw new JSONException("您已经安装过了，如果想重新安装，请删除" . '/kernel/Install/Lock' . '文件，即可重新安装!');
+        // 基于数据库判断是否已安装
+        try {
+            $db_config = config('database');
+            $prefix = $db_config['prefix'] ?? '';
+            $manageTable = $prefix . 'manage';
+            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
+            if ($isInstalled) {
+                throw new JSONException("您已经安装过了，数据库中已存在管理员账号!");
+            }
+        } catch (JSONException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            // 数据库表不存在，继续安装流程
         }
         $map = $_POST;
 
@@ -133,7 +153,6 @@ class Install extends User
         }
 
         unlink($sqlFile . ".tmp");
-        file_put_contents(BASE_PATH . '/kernel/Install/Lock', "");
 
         try {
             $this->app->install();

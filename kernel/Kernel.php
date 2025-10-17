@@ -54,10 +54,35 @@ try {
 
     $s = explode("/", trim((string)$routePath, '/'));
     Context::set(Base::ROUTE, "/" . implode("/", $s));
-    Context::set(Base::LOCK, (string)file_get_contents(BASE_PATH . "/kernel/Install/Lock"));
-    Context::set(Base::IS_INSTALL, file_exists(BASE_PATH . '/kernel/Install/Lock'));
     Context::set(Base::OPCACHE, extension_loaded("Zend OPcache") || extension_loaded("opcache"));
     Context::set(Base::STORE_STATUS, file_exists(BASE_PATH . "/kernel/Plugin.php"));
+
+    // 初始化数据库连接（提前到这里，用于检查是否已安装）
+    $capsule = new Manager();
+    $db_config = config('database');
+    $db_config['options'][PDO::ATTR_PERSISTENT] = true;
+    try {
+        $capsule->addConnection($db_config);
+        $capsule->setAsGlobal();
+        $capsule->bootEloquent();
+
+        // 基于数据库判断是否已安装（检查 manage 表是否存在数据）
+        try {
+            $prefix = $db_config['prefix'] ?? '';
+            $manageTable = $prefix . 'manage';
+            $isInstalled = \Illuminate\Database\Capsule\Manager::table($manageTable)->exists();
+            Context::set(Base::IS_INSTALL, $isInstalled);
+            Context::set(Base::LOCK, $isInstalled ? '1' : '');
+        } catch (\Exception $e) {
+            // 数据库表不存在或查询失败，认为未安装
+            Context::set(Base::IS_INSTALL, false);
+            Context::set(Base::LOCK, '');
+        }
+    } catch (\Exception $e) {
+        // 数据库连接失败，认为未安装
+        Context::set(Base::IS_INSTALL, false);
+        Context::set(Base::LOCK, '');
+    }
 
     $count = count($s);
     $controller = "App\\Controller";
@@ -84,18 +109,6 @@ try {
     $action = array_shift($parameter);
     //存储
     $_GET["_PARAMETER"] = Firewall::inst()->xssKiller($parameter);
-
-    //初始化数据库
-    $capsule = new Manager();
-    $db_config = config('database');
-    $db_config['options'][PDO::ATTR_PERSISTENT] = true;
-    // 创建链接
-    $capsule->addConnection($db_config);
-    // 设置全局静态可访问
-    $capsule->setAsGlobal();
-    // 启动Eloquent
-    $capsule->bootEloquent();
-
 
     //插件库
     if (Context::get(Base::STORE_STATUS) && Context::get(Base::IS_INSTALL)) {
