@@ -19,8 +19,11 @@ if (is_dir($file_path) && file_exists($file_path . '/index.php')) {
 
 // 否则，重写到 index.php，并设置 s 参数（模拟 .htaccess 规则）
 // .htaccess 规则: RewriteRule ^(.*)$ index.php?s=/$1
-$_GET['s'] = $uri;
-$_SERVER['PATH_INFO'] = $uri;
+// 注意：根路径 / 不设置 s 参数，让框架使用默认路由
+if ($uri !== '/') {
+    $_GET['s'] = $uri;
+    $_SERVER['PATH_INFO'] = $uri;
+}
 
 // 包含 index.php 处理请求
 require __DIR__ . '/index.php';
