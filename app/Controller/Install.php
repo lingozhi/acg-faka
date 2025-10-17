@@ -114,19 +114,23 @@ class Install extends User
 
         //导入数据库
         SQL::import($sqlFile . ".tmp", $host, $map['database'], $map['username'], $map['password'], $map['prefix']);
-        //设置数据库账号密码
-        setConfig([
-            'driver' => 'mysql',
-            'host' => $host,
-            'database' => $map['database'],
-            'username' => $map['username'],
-            'password' => $map['password'],
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => $map['prefix']
-        ], BASE_PATH . "/config/database.php");
 
-        Opcache::invalidate(BASE_PATH . "/config/database.php");
+        //设置数据库账号密码
+        //如果是 Railway 等云环境（存在 MYSQL_URL 或 DATABASE_URL），不修改配置文件，使用环境变量
+        if (!getenv('MYSQL_URL') && !getenv('DATABASE_URL') && !getenv('MYSQLHOST')) {
+            setConfig([
+                'driver' => 'mysql',
+                'host' => $host,
+                'database' => $map['database'],
+                'username' => $map['username'],
+                'password' => $map['password'],
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => $map['prefix']
+            ], BASE_PATH . "/config/database.php");
+
+            Opcache::invalidate(BASE_PATH . "/config/database.php");
+        }
 
         unlink($sqlFile . ".tmp");
         file_put_contents(BASE_PATH . '/kernel/Install/Lock', "");
