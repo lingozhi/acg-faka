@@ -57,33 +57,46 @@ try {
     Context::set(Base::OPCACHE, extension_loaded("Zend OPcache") || extension_loaded("opcache"));
     Context::set(Base::STORE_STATUS, file_exists(BASE_PATH . "/kernel/Plugin.php"));
 
-    // 初始化数据库连接（提前到这里，用于检查是否已安装）
-    $capsule = new Manager();
+    // 基于数据库判断是否已安装（使用 PDO 直接查询）
     $db_config = config('database');
+    $isInstalled = false;
+
+    try {
+        $dsn = "mysql:host={$db_config['host']};dbname={$db_config['database']};charset={$db_config['charset']}";
+        if (isset($db_config['port'])) {
+            $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
+        }
+
+        $pdo = new PDO($dsn, $db_config['username'], $db_config['password'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+
+        $prefix = $db_config['prefix'] ?? '';
+        $manageTable = $prefix . 'manage';
+
+        // 直接查询表中是否有记录
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM `{$manageTable}`");
+        $result = $stmt->fetch();
+        $isInstalled = ($result && $result['count'] > 0);
+
+    } catch (\Exception $e) {
+        // 数据库连接失败或表不存在，认为未安装
+        $isInstalled = false;
+    }
+
+    Context::set(Base::IS_INSTALL, $isInstalled);
+    Context::set(Base::LOCK, $isInstalled ? '1' : '');
+
+    // 初始化数据库连接（用于后续业务逻辑）
+    $capsule = new Manager();
     $db_config['options'][PDO::ATTR_PERSISTENT] = true;
     try {
         $capsule->addConnection($db_config);
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
-
-        // 基于数据库判断是否已安装（检查 manage 表是否存在数据）
-        try {
-            $prefix = $db_config['prefix'] ?? '';
-            $manageTable = $prefix . 'manage';
-            // 使用 count() 检查是否有记录
-            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
-            $isInstalled = $count > 0;
-            Context::set(Base::IS_INSTALL, $isInstalled);
-            Context::set(Base::LOCK, $isInstalled ? '1' : '');
-        } catch (\Exception $e) {
-            // 数据库表不存在或查询失败，认为未安装
-            Context::set(Base::IS_INSTALL, false);
-            Context::set(Base::LOCK, '');
-        }
     } catch (\Exception $e) {
-        // 数据库连接失败，认为未安装
-        Context::set(Base::IS_INSTALL, false);
-        Context::set(Base::LOCK, '');
+        // 数据库连接失败，继续执行（Install 控制器会处理）
     }
 
     $count = count($s);

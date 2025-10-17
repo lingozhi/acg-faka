@@ -36,18 +36,28 @@ class Install extends User
      */
     public function step(): string
     {
-        // 基于数据库判断是否已安装
+        // 基于数据库判断是否已安装（使用 PDO 直接查询）
         try {
             $db_config = config('database');
+            $dsn = "mysql:host={$db_config['host']};dbname={$db_config['database']};charset={$db_config['charset']}";
+            if (isset($db_config['port'])) {
+                $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
+            }
+
+            $pdo = new \PDO($dsn, $db_config['username'], $db_config['password'], [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+
             $prefix = $db_config['prefix'] ?? '';
             $manageTable = $prefix . 'manage';
-            // 使用 count() 检查是否有记录
-            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
-            if ($count > 0) {
+            $stmt = $pdo->query("SELECT COUNT(*) as count FROM `{$manageTable}`");
+            $result = $stmt->fetch();
+
+            if ($result && $result['count'] > 0) {
                 Client::redirect("/", "どうして?", 3);
             }
         } catch (\Exception $e) {
-            // 数据库表不存在，继续安装流程
+            // 数据库表不存在或连接失败，继续安装流程
         }
         $data = [];
         $data['version'] = config("app")['version'];
@@ -84,20 +94,30 @@ class Install extends User
      */
     public function submit(): array
     {
-        // 基于数据库判断是否已安装
+        // 基于数据库判断是否已安装（使用 PDO 直接查询）
         try {
             $db_config = config('database');
+            $dsn = "mysql:host={$db_config['host']};dbname={$db_config['database']};charset={$db_config['charset']}";
+            if (isset($db_config['port'])) {
+                $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
+            }
+
+            $pdo = new \PDO($dsn, $db_config['username'], $db_config['password'], [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+
             $prefix = $db_config['prefix'] ?? '';
             $manageTable = $prefix . 'manage';
-            // 使用 count() 检查是否有记录
-            $count = \Illuminate\Database\Capsule\Manager::table($manageTable)->count();
-            if ($count > 0) {
+            $stmt = $pdo->query("SELECT COUNT(*) as count FROM `{$manageTable}`");
+            $result = $stmt->fetch();
+
+            if ($result && $result['count'] > 0) {
                 throw new JSONException("您已经安装过了，数据库中已存在管理员账号!");
             }
         } catch (JSONException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // 数据库表不存在，继续安装流程
+            // 数据库表不存在或连接失败，继续安装流程
         }
         $map = $_POST;
 
