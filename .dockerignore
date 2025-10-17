@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+*.md
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node modules (if any)
+node_modules
+
+# Logs
+*.log
+logs
+
+# Testing
+tests
+.phpunit.*
+phpunit.xml
+
+# CI/CD
+.github
+.gitlab-ci.yml
