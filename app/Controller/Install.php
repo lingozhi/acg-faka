@@ -38,9 +38,14 @@ class Install extends User
      */
     public function step(): string
     {
+        error_log("[INSTALL DEBUG] step() method called");
+
         if (file_exists(BASE_PATH . '/data/Install.lock')) {
+            error_log("[INSTALL DEBUG] Lock file exists, redirecting to homepage");
             Client::redirect("/", "どうして?", 3);
         }
+
+        error_log("[INSTALL DEBUG] Lock file not found, rendering Install.html");
         $data = [];
         $data['version'] = config("app")['version'];
         $data['php_version'] = phpversion();
