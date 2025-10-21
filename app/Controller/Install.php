@@ -11,10 +11,12 @@ use App\Util\Opcache;
 use App\Util\Str;
 use App\Util\Validation;
 use Kernel\Annotation\Inject;
+use Kernel\Annotation\Interceptor;
 use Kernel\Exception\JSONException;
 use Kernel\Util\SQL;
 use Kernel\Util\View;
 
+#[Interceptor([])]
 class Install extends User
 {
 
