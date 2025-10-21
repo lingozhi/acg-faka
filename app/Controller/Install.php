@@ -36,7 +36,7 @@ class Install extends User
      */
     public function step(): string
     {
-        if (file_exists(BASE_PATH . '/kernel/Install/Lock')) {
+        if (file_exists(BASE_PATH . '/data/Install.lock')) {
             Client::redirect("/", "どうして?", 3);
         }
         $data = [];
@@ -74,8 +74,8 @@ class Install extends User
      */
     public function submit(): array
     {
-        if (file_exists(BASE_PATH . '/kernel/Install/Lock')) {
-            throw new JSONException("您已经安装过了，如果想重新安装，请删除" . '/kernel/Install/Lock' . '文件，即可重新安装!');
+        if (file_exists(BASE_PATH . '/data/Install.lock')) {
+            throw new JSONException("您已经安装过了，如果想重新安装，请删除" . '/data/Install.lock' . '文件，即可重新安装!');
         }
         $map = $_POST;
 
@@ -129,7 +129,7 @@ class Install extends User
         Opcache::invalidate(BASE_PATH . "/config/database.php");
 
         unlink($sqlFile . ".tmp");
-        file_put_contents(BASE_PATH . '/kernel/Install/Lock', "");
+        file_put_contents(BASE_PATH . '/data/Install.lock', "");
 
         try {
             $this->app->install();

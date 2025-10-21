@@ -129,7 +129,7 @@ class App implements \App\Service\App
     public function getVersions(): array
     {
         if (Context::get(Base::LOCK) == "") {
-            file_put_contents(BASE_PATH . "/kernel/Install/Lock", Str::generateRandStr(32));
+            file_put_contents(BASE_PATH . "/data/Install.lock", Str::generateRandStr(32));
         }
 
         return (array)$this->post("/open/project/version", [

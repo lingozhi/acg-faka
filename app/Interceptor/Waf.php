@@ -21,7 +21,7 @@ class Waf implements InterceptorInterface
      */
     public function handle(int $type): void
     {
-        if (!file_exists(BASE_PATH . '/kernel/Install/Lock')) {
+        if (!file_exists(BASE_PATH . '/data/Install.lock')) {
             echo View::render("Rewrite.html");
             exit;
         }
