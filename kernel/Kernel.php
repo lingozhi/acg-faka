@@ -32,6 +32,17 @@ session_name("ACG-SHOP");
 //session_start();
 //session_write_close();
 try {
+    $requestPath = $_GET['s'] ?? null;
+    if ($requestPath === null || $requestPath === '') {
+        // 在未启用重写规则（如 PHP 内置服务器）时使用 REQUEST_URI 作为路由来源
+        $rawUri = $_SERVER['REQUEST_URI'] ?? '/';
+        $pathFromUri = parse_url($rawUri, PHP_URL_PATH) ?: '/';
+        if ($pathFromUri !== '' && $pathFromUri !== '/') {
+            $requestPath = $pathFromUri;
+            $_GET['s'] = $requestPath;
+        }
+    }
+
     preg_match('/\/item\/(\d+)/', $_GET['s'] ?? "/", $_item);
     preg_match('/\/cat\/(\d+|recommend)/', $_GET['s'] ?? "/", $_cat);
 
@@ -46,7 +57,13 @@ try {
     }
 
     //waf install -> 2025-07-26
-    $routePath = $_GET['s'] = $_GET['s'] ?? "/user/index/index";
+    $routePath = $_GET['s'] ?? "/user/index/index";
+    if ($routePath === null || $routePath === '' || $routePath === '/') {
+        $routePath = "/user/index/index";
+        $_GET['s'] = $routePath;
+    } else {
+        $_GET['s'] = $routePath;
+    }
     Context::set(\Kernel\Context\Interface\Request::class, new Request());
     if (trim($routePath, "/") == 'admin') {
         header('location:' . "/admin/authentication/login");
