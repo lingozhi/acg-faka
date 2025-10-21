@@ -54,6 +54,12 @@ try {
 
     $s = explode("/", trim((string)$routePath, '/'));
     Context::set(Base::ROUTE, "/" . implode("/", $s));
+
+    // 确保 /data 目录存在（用于持久化存储）
+    if (!is_dir(BASE_PATH . '/data')) {
+        @mkdir(BASE_PATH . '/data', 0755, true);
+    }
+
     Context::set(Base::LOCK, file_exists(BASE_PATH . "/data/Install.lock") ? (string)file_get_contents(BASE_PATH . "/data/Install.lock") : '');
     Context::set(Base::IS_INSTALL, file_exists(BASE_PATH . '/data/Install.lock'));
     Context::set(Base::OPCACHE, extension_loaded("Zend OPcache") || extension_loaded("opcache"));

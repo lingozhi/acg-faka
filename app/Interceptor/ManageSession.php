@@ -81,6 +81,10 @@ class ManageSession implements InterceptorInterface
 
         if (!file_exists(BASE_PATH . "/data/terms")) {
             if (\Kernel\Util\Context::get(Base::ROUTE) == "/admin/dashboard/index" && $_GET['agree'] == 1) {
+                // 确保 /data 目录存在
+                if (!is_dir(BASE_PATH . '/data')) {
+                    @mkdir(BASE_PATH . '/data', 0755, true);
+                }
                 file_put_contents(BASE_PATH . "/data/terms", "用户同意协议，时间：" . Date::current());
                 header('content-type:application/json;charset=utf-8');
                 exit(json_encode(["code" => 200, "msg" => "success"]));

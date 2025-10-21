@@ -129,6 +129,10 @@ class App implements \App\Service\App
     public function getVersions(): array
     {
         if (Context::get(Base::LOCK) == "") {
+            // 确保 /data 目录存在
+            if (!is_dir(BASE_PATH . '/data')) {
+                @mkdir(BASE_PATH . '/data', 0755, true);
+            }
             file_put_contents(BASE_PATH . "/data/Install.lock", Str::generateRandStr(32));
         }
 
